@@ -100,7 +100,7 @@ namespace club
         dev.resize(1);
         dev[0] = context_->GetDevice();
 
-        error = clBuildProgram(program_, 1, &dev[0], "", NULL, NULL);
+        error = clBuildProgram(program_, 1, &dev[0], "-cl-std=CL2.0", NULL, NULL);
         programInfo_ = GetProgramInfo(program_, context_->GetDevice());
 
         if (error != CL_SUCCESS)
