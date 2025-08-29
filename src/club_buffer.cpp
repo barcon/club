@@ -100,7 +100,7 @@ namespace club
 
         return res;
     }
-    EventPtr Buffer::Write(std::size_t offset, std::size_t size, void* ptr, cl_bool block)
+    EventPtr Buffer::Write(std::size_t offset, std::size_t size, const void* ptr, cl_bool block)
     {
         EventPtr res {nullptr};
         cl_event event;

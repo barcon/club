@@ -21,7 +21,7 @@ namespace club
         bool Init(ConstContextPtr context, cl_mem_flags flags, std::size_t size);
 
         EventPtr Read(std::size_t offset, std::size_t size, void* ptr, cl_bool block = CL_FALSE);
-        EventPtr Write(std::size_t offset, std::size_t size, void* ptr, cl_bool block = CL_FALSE);
+        EventPtr Write(std::size_t offset, std::size_t size, const void* ptr, cl_bool block = CL_FALSE);
         
         const cl_mem& Get() const;
         const cl_context& GetContext() const;
