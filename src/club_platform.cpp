@@ -140,7 +140,6 @@ namespace club
             return error;
         }
 
-        logger::Info(header, "Number of devices in platform %d: %d", platformNumber, size);
 
         devices_[platformNumber].resize(size);
         devicesInfo_[platformNumber].resize(size);
@@ -153,6 +152,7 @@ namespace club
             return error;
         }
 
+        logger::Info(header, "Number of devices in platform %d: %d", platformNumber, size);
         for (DeviceNumber i = 0; i < devices_[platformNumber].size(); ++i)
         {
             devicesInfo_[platformNumber][i] = GetInfoDevice(platformNumber, i);
@@ -173,9 +173,9 @@ namespace club
         res.extensions = GetPlatformInfo<std::vector<char>>(platform, CL_PLATFORM_EXTENSIONS);
 
         logger::Info(header, "Platform: %d", platformNumber);
-        logger::Info(header, "Platform vendor: " + String(res.vendor.begin(), res.vendor.end()));
-        logger::Info(header, "Platform name: " + String(res.name.begin(), res.name.end()));
-        logger::Info(header, "Platform version: " + String(res.version.begin(), res.version.end()));
+        logger::Info(header, "\tPlatform vendor: " + String(res.vendor.begin(), res.vendor.end()));
+        logger::Info(header, "\tPlatform name: " + String(res.name.begin(), res.name.end()));
+        logger::Info(header, "\tPlatform version: " + String(res.version.begin(), res.version.end()));
 
         return res;
     }
@@ -224,8 +224,8 @@ namespace club
         res.version = GetDeviceInfo<std::vector<char>>(device, CL_DEVICE_VERSION);
         res.extensions = GetDeviceInfo<std::vector<char>>(device, CL_DEVICE_EXTENSIONS);
 
-        logger::Info(header, "Device (%d) vendor: " + String(res.vendor.begin(), res.vendor.end()), deviceNumber);
-        logger::Info(header, "Device (%d) name: " + String(res.name.begin(), res.name.end()), deviceNumber);
+        logger::Info(header, "\tDevice (%d) vendor: " + String(res.vendor.begin(), res.vendor.end()), deviceNumber);
+        logger::Info(header, "\tDevice (%d) name: " + String(res.name.begin(), res.name.end()), deviceNumber);
 
         return res;
     }
