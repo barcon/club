@@ -51,6 +51,10 @@ namespace club
         std::vector<std::vector<cl_device_id>> devices_;
         std::vector<std::vector<DeviceInfo>> devicesInfo_;
     };
+
+    void PrintInfoPlatform(const PlatformInfo& platformInfo, const PlatformNumber& platformNumber);
+    void PrintInfoDevice(const DeviceInfo& deviceInfo, const DeviceNumber& deviceNumber);
+
 } // namespace club
 
 #endif

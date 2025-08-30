@@ -62,6 +62,16 @@ namespace club
             }
         }
 
+        for (PlatformNumber i = 0; i < platforms_.size(); ++i)
+        {
+			PrintInfoPlatform(platformsInfo_[i], i);
+            
+            for (DeviceNumber j = 0; j < devices_[i].size(); ++j)
+            {
+                PrintInfoDevice(devicesInfo_[i][j], j);
+			}
+        }
+
         initialized_ = true;
 
         return CL_SUCCESS;
@@ -172,11 +182,6 @@ namespace club
         res.vendor = GetPlatformInfo<std::vector<char>>(platform, CL_PLATFORM_VENDOR);
         res.extensions = GetPlatformInfo<std::vector<char>>(platform, CL_PLATFORM_EXTENSIONS);
 
-        logger::Info(header, "Platform: %d", platformNumber);
-        logger::Info(header, "\tPlatform vendor: " + String(res.vendor.begin(), res.vendor.end()));
-        logger::Info(header, "\tPlatform name: " + String(res.name.begin(), res.name.end()));
-        logger::Info(header, "\tPlatform version: " + String(res.version.begin(), res.version.end()));
-
         return res;
     }
     DeviceInfo Platform::GetInfoDevice(const PlatformNumber& platformNumber, const DeviceNumber& deviceNumber) const
@@ -224,9 +229,6 @@ namespace club
         res.version = GetDeviceInfo<std::vector<char>>(device, CL_DEVICE_VERSION);
         res.extensions = GetDeviceInfo<std::vector<char>>(device, CL_DEVICE_EXTENSIONS);
 
-        logger::Info(header, "\tDevice (%d) vendor: " + String(res.vendor.begin(), res.vendor.end()), deviceNumber);
-        logger::Info(header, "\tDevice (%d) name: " + String(res.name.begin(), res.name.end()), deviceNumber);
-
         return res;
     }
     template <typename T> typename std::enable_if<!is_vector<T>::value, T>::type Platform::GetPlatformInfo(cl_platform_id platform, cl_platform_info info) const
@@ -270,5 +272,18 @@ namespace club
         clGetDeviceInfo(device, info, size, &res[0], 0);
 
         return res;
+    }
+
+    void PrintInfoPlatform(const PlatformInfo& platformInfo, const PlatformNumber& platformNumber)
+    {
+        logger::Info(header, "Platform: %d", platformNumber);
+        logger::Info(header, "\tVendor: " + String(platformInfo.vendor.begin(), platformInfo.vendor.end()));
+        logger::Info(header, "\tName: " + String(platformInfo.name.begin(), platformInfo.name.end()));
+        logger::Info(header, "\tVersion: " + String(platformInfo.version.begin(), platformInfo.version.end()));
+    }
+    void PrintInfoDevice(const DeviceInfo& deviceInfo, const DeviceNumber& deviceNumber)
+    {
+        logger::Info(header, "\tDevice (%d) vendor: " + String(deviceInfo.vendor.begin(), deviceInfo.vendor.end()), deviceNumber);
+        logger::Info(header, "\tDevice (%d) name: " + String(deviceInfo.name.begin(), deviceInfo.name.end()), deviceNumber);
     }
 } // namespace club
