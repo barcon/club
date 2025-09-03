@@ -65,6 +65,7 @@ namespace club
             if (error != CL_SUCCESS)
             {
                 logger::Error(header, "Buffer could not be created: " + messages.at(error));
+                logger::Error(header, "Could not allocate memory: %zu (kb)", size / 1024);
             }
             else
             {
