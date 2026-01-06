@@ -124,11 +124,11 @@ namespace club
         error = clGetPlatformIDs(size, &platforms_[0], NULL);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Platforms not initialized " + messages.at(error));
+            logger::Error(header, utils::string::Format("Platforms not initialized {}", messages.at(error)));
             return error;
         }
 
-        logger::Info(header, "Number of platforms: %d", size);
+        logger::Info(header, utils::string::Format("Number of platforms: {:d}", size));
 
         for (PlatformNumber i = 0; i < size; ++i)
         {
@@ -145,7 +145,7 @@ namespace club
         error = clGetDeviceIDs(platforms_[platformNumber], CL_DEVICE_TYPE_ALL, 0, NULL, &size);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Devices not found in platform: %d " + messages.at(error), platformNumber);
+            logger::Error(header, utils::string::Format("Devices not found in platform: {:d} {} ", platformNumber, messages.at(error)));
 
             return error;
         }
@@ -157,12 +157,12 @@ namespace club
         error = clGetDeviceIDs(platforms_[platformNumber], CL_DEVICE_TYPE_ALL, size, &devices_[platformNumber][0], NULL);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Devices not initialized in platform: %d" + messages.at(error), platformNumber);
+            logger::Error(header, utils::string::Format("Devices not initialized in platform: {:d} {}", platformNumber, messages.at(error)));
 
             return error;
         }
 
-        logger::Info(header, "Number of devices in platform %d: %d", platformNumber, size);
+        logger::Info(header, utils::string::Format("Number of devices in platform {:d}: {:d}", platformNumber, size));
         for (DeviceNumber i = 0; i < devices_[platformNumber].size(); ++i)
         {
             devicesInfo_[platformNumber][i] = GetInfoDevice(platformNumber, i);
@@ -276,14 +276,14 @@ namespace club
 
     void PrintInfoPlatform(const PlatformInfo& platformInfo, const PlatformNumber& platformNumber)
     {
-        logger::Info(header, "Platform: %d", platformNumber);
-        logger::Info(header, "\tVendor: " + String(platformInfo.vendor.begin(), platformInfo.vendor.end()));
-        logger::Info(header, "\tName: " + String(platformInfo.name.begin(), platformInfo.name.end()));
-        logger::Info(header, "\tVersion: " + String(platformInfo.version.begin(), platformInfo.version.end()));
+        logger::Info(header, utils::string::Format("Platform: {:d}", platformNumber));
+        logger::Info(header, utils::string::Format("\tVendor: {}", String(platformInfo.vendor.begin(), platformInfo.vendor.end())));
+        logger::Info(header, utils::string::Format("\tName: {}", String(platformInfo.name.begin(), platformInfo.name.end())));
+        logger::Info(header, utils::string::Format("\tVersion: {}", String(platformInfo.version.begin(), platformInfo.version.end())));
     }
     void PrintInfoDevice(const DeviceInfo& deviceInfo, const DeviceNumber& deviceNumber)
     {
-        logger::Info(header, "\tDevice (%d) vendor: " + String(deviceInfo.vendor.begin(), deviceInfo.vendor.end()), deviceNumber);
-        logger::Info(header, "\tDevice (%d) name: " + String(deviceInfo.name.begin(), deviceInfo.name.end()), deviceNumber);
+        logger::Info(header, utils::string::Format("\tDevice ({:d}) vendor: {}", deviceNumber, String(deviceInfo.vendor.begin(), deviceInfo.vendor.end())));
+        logger::Info(header, utils::string::Format("\tDevice ({:d}) name: {}", deviceNumber, String(deviceInfo.name.begin(), deviceInfo.name.end())));
     }
 } // namespace club

@@ -53,7 +53,7 @@ namespace club
 
         if (!platform)
         {
-            logger::Error(header, "Context (%d)(%d) not created: Platform pointer is null", platformNumber, deviceNumber);
+            logger::Error(header, utils::string::Format("Context {:d}{:d} not created: Platform pointer is null", platformNumber, deviceNumber));
 
             return CL_INVALID_PLATFORM;
         }
@@ -61,8 +61,7 @@ namespace club
         platform_ = platform;
         if (platformNumber >= platform_->GetNumberPlatforms())
         {
-            logger::Error(header, "Context (%d)(%d) not created: Platform number greater than existing ones",
-                platformNumber, deviceNumber);
+            logger::Error(header, utils::string::Format("Context {:d}{:d} not created: Platform number greater than existing ones", platformNumber, deviceNumber));
 
             return CL_INVALID_PLATFORM;
         }
@@ -70,8 +69,7 @@ namespace club
         platformNumber_ = platformNumber;
         if (deviceNumber >= platform_->GetNumberDevices(platformNumber))
         {
-            logger::Error(header, "Context (%d)(%d) not created: Device number greater than existing ones", platformNumber,
-                deviceNumber);
+            logger::Error(header, utils::string::Format("Context {:d}{:d} not created: Device number greater than existing ones", platformNumber, deviceNumber));
 
             return CL_INVALID_DEVICE;
         }
@@ -84,7 +82,7 @@ namespace club
         context_ = clCreateContext(contextProps_, 1, &dev[0], nullptr, nullptr, &error);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Context (%d)(%d) not created: " + messages.at(error), platformNumber, deviceNumber);
+            logger::Error(header, utils::string::Format("Context {:d}{:d} not created: {}", platformNumber, deviceNumber, messages.at(error)));
 
             return error;
         }
@@ -94,7 +92,8 @@ namespace club
             queueProps_, &error);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Queue (%d)(%d) not created: " + messages.at(error), platformNumber, deviceNumber);
+            logger::Error(header, utils::string::Format("Queue {:d}{:d} not created: {}", platformNumber, deviceNumber, messages.at(error)));
+
             clReleaseContext(context_);
 
             return error;

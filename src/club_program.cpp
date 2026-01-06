@@ -30,7 +30,7 @@ namespace club
 
         if (error)
         {
-            logger::Error(header, "Could not read file " + fileName);
+            logger::Error(header, utils::string::Format("Could not read file {}", fileName));
             return nullptr;
         }
 
@@ -92,7 +92,7 @@ namespace club
         program_ = clCreateProgramWithSource(context_->Get(), 1, &src, NULL, &error);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Program could not be created with source: " + messages.at(error));
+            logger::Error(header, utils::string::Format("Program could not be created with source: {}", messages.at(error)));
 
             return error;
         }
@@ -105,7 +105,7 @@ namespace club
 
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Program could not be built: " + messages.at(error));
+            logger::Error(header, utils::string::Format("Program could not be built: {}", messages.at(error)));
             logger::Error(header, String(programInfo_.buildLog.begin(), programInfo_.buildLog.end()));
 
             return error;

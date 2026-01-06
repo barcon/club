@@ -69,7 +69,7 @@ namespace club
         kernel_ = clCreateKernel(program->Get(), kernelName_.c_str(), &error);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Kernel (%s) could not be created from program: " + messages.at(error), kernelName_);
+            logger::Error(header, utils::string::Format("Kernel {} could not be created from program: {}", kernelName_, messages.at(error)));
 
             return error;
         }
@@ -114,7 +114,7 @@ namespace club
 
         if ((error = clSetKernelArg(kernel_, argNumber, size_type, ptr)) != CL_SUCCESS)
         {
-            logger::Error(header, "Kernel arguments could not be set: " + messages.at(error));
+            logger::Error(header, utils::string::Format("Kernel arguments could not be set: {}", messages.at(error)));
 
             return;
         }

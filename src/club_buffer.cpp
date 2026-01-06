@@ -64,8 +64,8 @@ namespace club
 
             if (error != CL_SUCCESS)
             {
-                logger::Error(header, "Buffer could not be created: " + messages.at(error));
-                logger::Error(header, "Could not allocate memory: %zu (kb)", size / 1024);
+                logger::Error(header, utils::string::Format("Buffer could not be created: {}", messages.at(error)));
+                logger::Error(header, utils::string::Format("Could not allocate memory: {} (kb)", size / 1024));
             }
             else
             {
@@ -92,7 +92,7 @@ namespace club
 
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Error reading buffer: " + messages.at(error));
+            logger::Error(header, utils::string::Format("Error reading buffer: {}", messages.at(error)));
         }
         else
         {
@@ -111,7 +111,7 @@ namespace club
 
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, "Error writing buffer: " + messages.at(error));
+            logger::Error(header, utils::string::Format("Error writing buffer: {}", messages.at(error)));
         }
         else
         {
