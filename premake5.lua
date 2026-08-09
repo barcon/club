@@ -1,26 +1,27 @@
 -- premake5.lua
 workspace "club"
-   configurations { "Debug", "Release" }
+   configurations { "Debug", "ReleaseCL" }
    location "build"
 
 project "club"
-   kind "StaticLib"
-   language "C++"
-   cppdialect "C++20"
-   
-   targetdir "build/%{cfg.buildcfg}"
-   includedirs { "../utils/src"}
-   includedirs { "../logger/src"}
-   includedirs { "../opencl/inc"}
+	kind "StaticLib"
+	language "C++"
+	cppdialect "C++20"
+	architecture "x86_64" 
+	objdir "%{cfg.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"   
 
-   files { "src/**.hpp", "src/**.cpp" }
+	targetdir "build/%{cfg.buildcfg}"
+	includedirs { "../utils/src"}
+	includedirs { "../logger/src"}
+	includedirs { "../opencl/inc"}
 
-   filter "configurations:Debug"
-	  architecture "x86_64"    
+	files { "src/**.hpp", "src/**.cpp" }
+
+	filter "configurations:Debug"  
 	  defines { "DEBUG" }
-      symbols "On"
+	  symbols "On"
 
-   filter "configurations:Release"
-      architecture "x86_64" 	  
+	filter "configurations:ReleaseCL"
+	  architecture "x86_64" 	  
 	  defines { "NDEBUG" }
-      optimize "Speed"
+	  optimize "Speed"

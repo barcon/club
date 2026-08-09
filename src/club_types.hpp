@@ -23,14 +23,15 @@ namespace club
     using Dimension = cl_uint;
     using Index = std::size_t;
 
+    using Number = std::size_t;
     using NumberDevices = std::size_t;
     using NumberPlatforms = std::size_t;
     using GlobalSize = std::vector<std::size_t>;
     using LocalSize = std::vector<std::size_t>;
     using NumberGroups = std::vector<cl_uint>;
 
-    using PlatformNumber = NumberPlatforms;
-    using DeviceNumber = NumberDevices;
+    using PlatformNumber = Number;
+    using DeviceNumber = Number;
 
     using Events = std::vector<cl_event>;
     using Platforms = std::vector<cl_platform_id>;
