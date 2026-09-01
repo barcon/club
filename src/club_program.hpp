@@ -6,9 +6,9 @@
 namespace club
 {
     ProgramPtr CreateProgram();
-    ProgramPtr CreateProgramFromString(ConstContextPtr context, const String& source);
-    ProgramPtr CreateProgramFromFile(ConstContextPtr context, const String& fileName);
-    ProgramPtr CreateProgramFromFile(ConstContextPtr context, const char* fileName);
+    ProgramPtr CreateProgramFromString(ContextPtr context, const String& source);
+    ProgramPtr CreateProgramFromFile(ContextPtr context, const String& fileName);
+    ProgramPtr CreateProgramFromFile(ContextPtr context, const char* fileName);
 
     class Program : public std::enable_shared_from_this<Program>
     {
@@ -19,10 +19,9 @@ namespace club
         ProgramPtr GetPtr();
         ConstProgramPtr GetPtr() const;
 
-        Error Init(ConstContextPtr context, const String& source);
+        Error Init(ContextPtr context, const String& source);
 
         const cl_program& Get() const;
-        const cl_context& GetContext() const;
         const ProgramInfo& GetInfo() const;
         const String& GetSource() const;
 
@@ -39,13 +38,8 @@ namespace club
         template <typename T> typename std::enable_if<!is_vector<T>::value, T>::type GetProgramBuildInfo(cl_program program, cl_device_id device, cl_program_build_info info) const;
         template <typename T> typename std::enable_if<is_vector<T>::value, T>::type GetProgramBuildInfo(cl_program program, cl_device_id device, cl_program_build_info info) const;
 
-        bool initialized_{ false };
-
-        ConstPlatformPtr platform_{ nullptr };
-        ConstContextPtr context_{ nullptr };
-
         String source_;
-        cl_program program_;
+        cl_program program_{ nullptr };
         ProgramInfo programInfo_;
     };
 } // namespace club

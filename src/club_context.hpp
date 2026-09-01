@@ -6,7 +6,7 @@
 namespace club
 {
     ContextPtr CreateContext();
-    ContextPtr CreateContext(ConstPlatformPtr platform, const PlatformNumber& platformNumber, const DeviceNumber& deviceNumber);
+    ContextPtr CreateContext(PlatformPtr platform, PlatformIndex platformIndex, const DeviceIndices& deviceIndices);
 
     class Context : public std::enable_shared_from_this<Context>
     {
@@ -17,20 +17,16 @@ namespace club
         ContextPtr GetPtr();
         ConstContextPtr GetPtr() const;
 
-        Error Init(ConstPlatformPtr platform, const PlatformNumber& platformNumber, const DeviceNumber& deviceNumber);
-
-        PlatformNumber GetPlatformNumber() const;
-        DeviceNumber GetDeviceNumber() const;
+        Error Init(PlatformPtr platform, PlatformIndex platformIndex, const DeviceIndices& deviceIndices);
 
         const cl_context& Get() const;
-        const cl_command_queue& GetQueue() const;
-        const cl_device_id& GetDevice() const;
-        const cl_platform_id& GetPlatform() const;
+        const Queues& GetQueues() const;
+        const Devices& GetDevices() const;
+		LocalSize GetLocalSize(DeviceIndex deviceIndex, Dimension dim) const;
 
         const ContextInfo& GetInfo() const;
-        const QueueInfo& GetQueueInfo() const;
-
-        ConstPlatformPtr GetPlatformPtr() const;
+        const DeviceInfo& GetDeviceInfo(DeviceIndex deviceIndex) const;
+        const QueueInfo& GetQueueInfo(DeviceIndex deviceIndex) const;
 
     protected:
         Context() = default;
@@ -44,18 +40,14 @@ namespace club
         template <typename T> typename std::enable_if<!is_vector<T>::value, T>::type GetQueueInfo(cl_command_queue queue, cl_command_queue_info info) const;
         template <typename T> typename std::enable_if<is_vector<T>::value, T>::type GetQueueInfo(cl_command_queue queue, cl_command_queue_info info) const;
 
-        bool initialized_{ false };
+        Devices devices_{};
+        DevicesInfo devicesInfo_{};
+        
+        Queues queues_{};
+        QueuesInfo queuesInfo_{};
 
-        ConstPlatformPtr platform_{ nullptr };
-
-        PlatformNumber platformNumber_{ 0 };
-        DeviceNumber deviceNumber_{ 0 };
-
-        cl_context context_;
-        cl_command_queue queue_;
-
+        cl_context context_{ nullptr };
         ContextInfo contextInfo_;
-        QueueInfo queueInfo_;
 
         cl_context_properties contextProps_[3] = { CL_CONTEXT_PLATFORM, 0, 0 };
         cl_queue_properties queueProps_[1] = { 0 };

@@ -7,7 +7,7 @@ namespace club
     {
         return Program::Create();
     }
-    ProgramPtr CreateProgramFromString(ConstContextPtr context, const String& source)
+    ProgramPtr CreateProgramFromString(ContextPtr context, const String& source)
     {
         Error error;
         auto res = Program::Create();
@@ -20,7 +20,7 @@ namespace club
 
         return res;
     }
-    ProgramPtr CreateProgramFromFile(ConstContextPtr context, const String& fileName)
+    ProgramPtr CreateProgramFromFile(ContextPtr context, const String& fileName)
     {
         File file;
         Error error;
@@ -42,7 +42,7 @@ namespace club
 
         return res;
     }
-    ProgramPtr CreateProgramFromFile(ConstContextPtr context, const char* fileName)
+    ProgramPtr CreateProgramFromFile(ContextPtr context, const char* fileName)
     {
         return CreateProgramFromFile(context, static_cast<String>(fileName));
     }
@@ -67,12 +67,12 @@ namespace club
     {
         return const_cast<Program*>(this)->GetPtr();
     }
-    Error Program::Init(ConstContextPtr context, const String& source)
+    Error Program::Init(ContextPtr context, const String& source)
     {
         Error error;
         Devices dev;
 
-        if (initialized_)
+        if (program_)
         {
             return CL_SUCCESS;
         }
@@ -84,12 +84,10 @@ namespace club
             return CL_INVALID_CONTEXT;
         }
 
-        platform_ = context->GetPlatformPtr();
-        context_ = context;
         source_ = source;
         auto src = source_.c_str();
 
-        program_ = clCreateProgramWithSource(context_->Get(), 1, &src, NULL, &error);
+        program_ = clCreateProgramWithSource(context->Get(), 1, &src, NULL, &error);
         if (error != CL_SUCCESS)
         {
             logger::Error(header, utils::string::Format("Program could not be created with source: {}", messages.at(error)));
@@ -97,11 +95,8 @@ namespace club
             return error;
         }
         
-        dev.resize(1);
-        dev[0] = context_->GetDevice();
-
-        error = clBuildProgram(program_, 1, &dev[0], "-cl-std=CL2.0", NULL, NULL);
-        programInfo_ = GetProgramInfo(program_, context_->GetDevice());
+        error = clBuildProgram(program_, static_cast<cl_uint>(context->GetDevices().size()), &context->GetDevices()[0], "-cl-std=CL2.0", NULL, NULL);
+        programInfo_ = GetProgramInfo(program_, context->GetDevices()[0]);
 
         if (error != CL_SUCCESS)
         {
@@ -111,17 +106,11 @@ namespace club
             return error;
         }
  
-        initialized_ = true;
-
         return CL_SUCCESS;
     }
     const cl_program& Program::Get() const
     {
         return program_;
-    }
-    const cl_context& Program::GetContext() const
-    {
-        return context_->Get();
     }
     const ProgramInfo& Program::GetInfo() const
     {
@@ -150,6 +139,7 @@ namespace club
 
         return res;
     }
+    
     template <typename T> typename std::enable_if<!is_vector<T>::value, T>::type Program::GetProgramInfo(cl_program program, cl_program_info info) const
     {
         std::size_t size;

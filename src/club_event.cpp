@@ -38,14 +38,13 @@ namespace club
     }
     Error Event::Init(cl_event event)
     {
-        if (initialized_)
+        if (event_)
         {
             return CL_SUCCESS;
         }
 
         event_ = event;
         eventInfo_ = GetInfoEvent(event_);
-        initialized_ = true;
 
         return CL_SUCCESS;
     }

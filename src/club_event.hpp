@@ -32,8 +32,7 @@ namespace club
         template <typename T>
         typename std::enable_if<is_vector<T>::value, T>::type GetEventInfo(cl_event event, cl_mem_info info) const;
 
-        bool initialized_{ false };
-        cl_event event_;
+        cl_event event_{ nullptr };
         EventInfo eventInfo_;
     };
 } // namespace club

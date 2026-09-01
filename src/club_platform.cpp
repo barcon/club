@@ -2,18 +2,16 @@
 
 namespace club
 {
-    PlatformPtr CreatePlatform(bool initialize)
+    PlatformPtr CreatePlatform()
     {
         Error error;
+
         auto res = Platform::Create();
 
-        if (initialize)
+        error = res->Init();
+        if (error != CL_SUCCESS)
         {
-            error = res->Init();
-            if (error != CL_SUCCESS)
-            {
-                return nullptr;
-            }
+            return nullptr;
         }
 
         return res;
@@ -39,7 +37,7 @@ namespace club
     {
         Error error;
 
-        if (initialized_)
+        if (platforms_.size() > 0)
         {
             return CL_SUCCESS;
         }
@@ -53,7 +51,7 @@ namespace club
         devices_.resize(platforms_.size());
         devicesInfo_.resize(platforms_.size());
 
-        for (PlatformNumber i = 0; i < platforms_.size(); ++i)
+        for (PlatformIndex i = 0; i < platforms_.size(); ++i)
         {
             error = InitializeDevices(i);
             if (error != CL_SUCCESS)
@@ -62,17 +60,15 @@ namespace club
             }
         }
 
-        for (PlatformNumber i = 0; i < platforms_.size(); ++i)
+        for (PlatformIndex i = 0; i < platforms_.size(); ++i)
         {
 			PrintInfoPlatform(platformsInfo_[i], i);
             
-            for (DeviceNumber j = 0; j < devices_[i].size(); ++j)
+            for (DeviceIndex j = 0; j < devices_[i].size(); ++j)
             {
                 PrintInfoDevice(devicesInfo_[i][j], j);
 			}
         }
-
-        initialized_ = true;
 
         return CL_SUCCESS;
     }
@@ -80,30 +76,30 @@ namespace club
     {
         return static_cast<NumberPlatforms>(platforms_.size());
     }
-    NumberDevices Platform::GetNumberDevices(const PlatformNumber& platformNumber) const
+    NumberDevices Platform::GetNumberDevices(PlatformIndex platformIndex) const
     {
-        if (platformNumber > devices_.size())
+        if (platformIndex >= platforms_.size())
         {
             return 0;
         }
 
-        return static_cast<NumberDevices>(devices_[platformNumber].size());
+        return static_cast<NumberDevices>(devices_[platformIndex].size());
     }
-    const cl_platform_id& Platform::Get(const PlatformNumber& platformNumber) const
+    const cl_platform_id& Platform::Get(PlatformIndex platformIndex) const
     {
-        return platforms_[platformNumber];
+        return platforms_[platformIndex];
     }
-    const PlatformInfo& Platform::GetInfo(const PlatformNumber& platformNumber) const
+    const PlatformInfo& Platform::GetInfo(PlatformIndex platformIndex) const
     {
-        return platformsInfo_[platformNumber];
+        return platformsInfo_[platformIndex];
     }
-    const cl_device_id& Platform::GetDevice(const PlatformNumber& platformNumber, const DeviceNumber& deviceNumber) const
+    const cl_device_id& Platform::GetDevice(PlatformIndex platformIndex, DeviceIndex deviceIndex) const
     {
-        return devices_[platformNumber][deviceNumber];
+        return devices_[platformIndex][deviceIndex];
     }
-    const DeviceInfo& Platform::GetDeviceInfo(const PlatformNumber& platformNumber, const DeviceNumber& deviceNumber) const
+    const DeviceInfo& Platform::GetDeviceInfo(PlatformIndex platformIndex, DeviceIndex deviceIndex) const
     {
-        return devicesInfo_[platformNumber][deviceNumber];
+        return devicesInfo_[platformIndex][deviceIndex];
     }
     Error Platform::InitializePlatforms()
     {
@@ -130,50 +126,51 @@ namespace club
 
         logger::Info(header, utils::string::Format("Number of platforms: {:d}", size));
 
-        for (PlatformNumber i = 0; i < size; ++i)
+        for (PlatformIndex i = 0; i < size; ++i)
         {
             platformsInfo_[i] = GetInfoPlatform(i);
         }
 
         return CL_SUCCESS;
     }
-    Error Platform::InitializeDevices(const PlatformNumber& platformNumber)
+    Error Platform::InitializeDevices(PlatformIndex platformIndex)
     {
         Error error;
         Size size;
 
-        error = clGetDeviceIDs(platforms_[platformNumber], CL_DEVICE_TYPE_ALL, 0, NULL, &size);
+        error = clGetDeviceIDs(platforms_[platformIndex], CL_DEVICE_TYPE_ALL, 0, NULL, &size);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, utils::string::Format("Devices not found in platform: {:d} {} ", platformNumber, messages.at(error)));
+            logger::Error(header, utils::string::Format("Devices not found in platform: {:d} {} ", platformIndex, messages.at(error)));
 
             return error;
         }
 
 
-        devices_[platformNumber].resize(size);
-        devicesInfo_[platformNumber].resize(size);
+        devices_[platformIndex].resize(size);
+        devicesInfo_[platformIndex].resize(size);
 
-        error = clGetDeviceIDs(platforms_[platformNumber], CL_DEVICE_TYPE_ALL, size, &devices_[platformNumber][0], NULL);
+        error = clGetDeviceIDs(platforms_[platformIndex], CL_DEVICE_TYPE_ALL, size, &devices_[platformIndex][0], NULL);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, utils::string::Format("Devices not initialized in platform: {:d} {}", platformNumber, messages.at(error)));
+            logger::Error(header, utils::string::Format("Devices not initialized in platform: {:d} {}", platformIndex, messages.at(error)));
 
             return error;
         }
 
-        logger::Info(header, utils::string::Format("Number of devices in platform {:d}: {:d}", platformNumber, size));
-        for (DeviceNumber i = 0; i < devices_[platformNumber].size(); ++i)
+        logger::Info(header, utils::string::Format("Number of devices in platform {:d}: {:d}", platformIndex, size));
+        for (DeviceIndex i = 0; i < devices_[platformIndex].size(); ++i)
         {
-            devicesInfo_[platformNumber][i] = GetInfoDevice(platformNumber, i);
+            devicesInfo_[platformIndex][i] = GetInfoDevice(platformIndex, i);
         }
 
         return CL_SUCCESS;
     }
-    PlatformInfo Platform::GetInfoPlatform(const PlatformNumber& platformNumber) const
+    
+    PlatformInfo Platform::GetInfoPlatform(PlatformIndex platformIndex) const
     {
         PlatformInfo res;
-        cl_platform_id platform = platforms_[platformNumber];
+        cl_platform_id platform = platforms_[platformIndex];
         String message;
 
         res.profile = GetPlatformInfo<std::vector<char>>(platform, CL_PLATFORM_PROFILE);
@@ -184,17 +181,17 @@ namespace club
 
         return res;
     }
-    DeviceInfo Platform::GetInfoDevice(const PlatformNumber& platformNumber, const DeviceNumber& deviceNumber) const
+    DeviceInfo Platform::GetInfoDevice(PlatformIndex platformIndex, DeviceIndex deviceIndex) const
     {
         DeviceInfo res;
-        cl_device_id device = devices_[platformNumber][deviceNumber];
+        cl_device_id device = devices_[platformIndex][deviceIndex];
         String message;
 
         res.type = GetDeviceInfo<cl_device_type>(device, CL_DEVICE_TYPE);
         res.vendorID = GetDeviceInfo<cl_uint>(device, CL_DEVICE_VENDOR_ID);
         res.maxComputeUnits = GetDeviceInfo<cl_uint>(device, CL_DEVICE_MAX_COMPUTE_UNITS);
         res.maxWorkItemDimensions = GetDeviceInfo<cl_uint>(device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS);
-        res.maxWorItemSizes = GetDeviceInfo<std::vector<std::size_t>>(device, CL_DEVICE_MAX_WORK_ITEM_SIZES);
+        res.maxWorkItemSizes = GetDeviceInfo<std::vector<std::size_t>>(device, CL_DEVICE_MAX_WORK_ITEM_SIZES);
         res.maxWorkGroupSize = GetDeviceInfo<std::size_t>(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
         res.maxClockFrequency = GetDeviceInfo<cl_uint>(device, CL_DEVICE_MAX_CLOCK_FREQUENCY);
         res.addressBits = GetDeviceInfo<cl_uint>(device, CL_DEVICE_ADDRESS_BITS);
@@ -231,6 +228,7 @@ namespace club
 
         return res;
     }
+    
     template <typename T> typename std::enable_if<!is_vector<T>::value, T>::type Platform::GetPlatformInfo(cl_platform_id platform, cl_platform_info info) const
     {
         std::size_t size;
@@ -274,16 +272,16 @@ namespace club
         return res;
     }
 
-    void PrintInfoPlatform(const PlatformInfo& platformInfo, const PlatformNumber& platformNumber)
+    void PrintInfoPlatform(const PlatformInfo& platformInfo, PlatformIndex platformIndex)
     {
-        logger::Info(header, utils::string::Format("Platform: {:d}", platformNumber));
+        logger::Info(header, utils::string::Format("Platform: {:d}", platformIndex));
         logger::Info(header, utils::string::Format("\tVendor: {}", String(platformInfo.vendor.begin(), platformInfo.vendor.end())));
         logger::Info(header, utils::string::Format("\tName: {}", String(platformInfo.name.begin(), platformInfo.name.end())));
         logger::Info(header, utils::string::Format("\tVersion: {}", String(platformInfo.version.begin(), platformInfo.version.end())));
     }
-    void PrintInfoDevice(const DeviceInfo& deviceInfo, const DeviceNumber& deviceNumber)
+    void PrintInfoDevice(const DeviceInfo& deviceInfo, DeviceIndex deviceIndex)
     {
-        logger::Info(header, utils::string::Format("\tDevice ({:d}) vendor: {}", deviceNumber, String(deviceInfo.vendor.begin(), deviceInfo.vendor.end())));
-        logger::Info(header, utils::string::Format("\tDevice ({:d}) name: {}", deviceNumber, String(deviceInfo.name.begin(), deviceInfo.name.end())));
+        logger::Info(header, utils::string::Format("\tDevice ({:d}) vendor: {}", deviceIndex, String(deviceInfo.vendor.begin(), deviceInfo.vendor.end())));
+        logger::Info(header, utils::string::Format("\tDevice ({:d}) name: {}", deviceIndex, String(deviceInfo.name.begin(), deviceInfo.name.end())));
     }
 } // namespace club

@@ -6,12 +6,12 @@ namespace club
     {
         return Context::Create();
     }
-    ContextPtr CreateContext(ConstPlatformPtr platform, const PlatformNumber& platformNumber, const DeviceNumber& deviceNumber)
+    ContextPtr CreateContext(PlatformPtr platform, PlatformIndex platformIndex, const DeviceIndices& deviceIndices)
     {
         Error error;
         auto res = Context::Create();
 
-        error = res->Init(platform, platformNumber, deviceNumber);
+        error = res->Init(platform, platformIndex, deviceIndices);
         if (error != CL_SUCCESS)
         {
             return nullptr;
@@ -21,7 +21,11 @@ namespace club
     }
     Context::~Context()
     {
-        clReleaseCommandQueue(queue_);
+        for(auto &queue : queues_)
+        {
+            clReleaseCommandQueue(queue);
+        }
+
         clReleaseContext(context_);
     }
     ContextPtr Context::Create()
@@ -31,6 +35,7 @@ namespace club
         };
 
         auto res = std::make_shared<MakeSharedEnabler>();
+
         return res;
     }
     ContextPtr Context::GetPtr()
@@ -41,104 +46,131 @@ namespace club
     {
         return const_cast<Context*>(this)->GetPtr();
     }
-    Error Context::Init(ConstPlatformPtr platform, const PlatformNumber& platformNumber, const DeviceNumber& deviceNumber)
+    Error Context::Init(PlatformPtr platform, PlatformIndex platformIndex, const DeviceIndices& deviceIndices)
     {
         Error error;
-        Devices dev;
 
-        if (initialized_)
+        if (context_)
         {
             return CL_SUCCESS;
         }
 
         if (!platform)
         {
-            logger::Error(header, utils::string::Format("Context {:d}{:d} not created: Platform pointer is null", platformNumber, deviceNumber));
+            logger::Error(header, utils::string::Format("Context {0} not created: Platform pointer is null", platformIndex));
 
             return CL_INVALID_PLATFORM;
         }
 
-        platform_ = platform;
-        if (platformNumber >= platform_->GetNumberPlatforms())
+        if (platformIndex >= platform->GetNumberPlatforms())
         {
-            logger::Error(header, utils::string::Format("Context {:d}{:d} not created: Platform number greater than existing ones", platformNumber, deviceNumber));
+            logger::Error(header, utils::string::Format("Context {0} not created: Platform index greater than existing ones", platformIndex));
 
             return CL_INVALID_PLATFORM;
         }
 
-        platformNumber_ = platformNumber;
-        if (deviceNumber >= platform_->GetNumberDevices(platformNumber))
+        devices_.clear();
+        devicesInfo_.clear();
+        
+        for (auto& deviceIndex : deviceIndices)
         {
-            logger::Error(header, utils::string::Format("Context {:d}{:d} not created: Device number greater than existing ones", platformNumber, deviceNumber));
+            if (deviceIndex >= platform->GetNumberDevices(platformIndex))
+            {
+                logger::Error(header, utils::string::Format("Context {0}{1} not created: Device index greater than existing ones", platformIndex, deviceIndex));
+             
+                continue;
+			}
 
-            return CL_INVALID_DEVICE;
+			auto device = platform->GetDevice(platformIndex, deviceIndex);
+            auto deviceInfo = platform->GetDeviceInfo(platformIndex, deviceIndex);
+
+            devices_.push_back(device);
+            devicesInfo_.push_back(deviceInfo);
         }
 
-        deviceNumber_ = deviceNumber;
-        dev.resize(1);
-        dev[0] = platform_->GetDevice(platformNumber_, deviceNumber_);
-        contextProps_[1] = (cl_context_properties)platform->Get(platformNumber_);
-
-        context_ = clCreateContext(contextProps_, 1, &dev[0], nullptr, nullptr, &error);
+        contextProps_[1] = (cl_context_properties)platform->Get(platformIndex);
+        context_ = clCreateContext(contextProps_, static_cast<cl_uint>(devices_.size()), &devices_[0], nullptr, nullptr, &error);
         if (error != CL_SUCCESS)
         {
-            logger::Error(header, utils::string::Format("Context {:d}{:d} not created: {}", platformNumber, deviceNumber, messages.at(error)));
-
+            logger::Error(header, utils::string::Format("Context {0} not created: {1}", platformIndex, messages.at(error)));
             return error;
         }
-
         contextInfo_ = GetContextInfo(context_);
-        queue_ = clCreateCommandQueueWithProperties(context_, platform_->GetDevice(platformNumber, deviceNumber),
-            queueProps_, &error);
-        if (error != CL_SUCCESS)
+      
+        queues_.clear();
+        queuesInfo_.clear();
+
+        for (auto& deviceIndex : deviceIndices)
         {
-            logger::Error(header, utils::string::Format("Queue {:d}{:d} not created: {}", platformNumber, deviceNumber, messages.at(error)));
+            auto device = platform->GetDevice(platformIndex, deviceIndex);
+            auto queue = clCreateCommandQueueWithProperties(context_, device, queueProps_, &error);
 
-            clReleaseContext(context_);
+            if (error != CL_SUCCESS)
+            {
+                logger::Error(header, utils::string::Format("Queue not created for device {0}: {1}", deviceIndex, messages.at(error)));
 
-            return error;
+                return error;
+            }
+
+            auto queueInfo = GetQueueInfo(queue);
+
+            queues_.push_back(queue);
+            queuesInfo_.push_back(queueInfo);
         }
-
-        queueInfo_ = GetQueueInfo(queue_);
-        initialized_ = true;
 
         return CL_SUCCESS;
-    }
-    PlatformNumber Context::GetPlatformNumber() const
-    {
-        return platformNumber_;
-    }
-    DeviceNumber Context::GetDeviceNumber() const
-    {
-        return deviceNumber_;
     }
     const cl_context& Context::Get() const
     {
         return context_;
     }
-    const cl_command_queue& Context::GetQueue() const
+    const Queues& Context::GetQueues() const
     {
-        return queue_;
+		return queues_;
     }
-    const cl_device_id& Context::GetDevice() const
+    const Devices& Context::GetDevices() const
     {
-        return platform_->GetDevice(platformNumber_, deviceNumber_);
+        return devices_;
     }
-    const cl_platform_id& Context::GetPlatform() const
+    LocalSize Context::GetLocalSize(DeviceIndex deviceIndex, Dimension dim) const
     {
-        return platform_->Get(platformNumber_);
+        auto workGroupSize = devicesInfo_[deviceIndex].maxWorkGroupSize;
+
+		LocalSize localSize(dim, 1);
+        std::size_t aux{ 1 };
+
+        if (devicesInfo_[deviceIndex].type == CL_DEVICE_TYPE_CPU)
+        {
+            aux = 1;
+        }
+        else if (devicesInfo_[deviceIndex].type == CL_DEVICE_TYPE_GPU)
+        {
+            aux = std::min(32u, utils::math::Power2Floor(static_cast<unsigned int>(std::pow(workGroupSize, 1. / dim))));
+        }
+        else
+        {
+            aux = 1;
+        }
+
+        for (auto& it : localSize)
+        {
+            it = aux;
+        }
+
+        return localSize;
     }
+    
     const ContextInfo& Context::GetInfo() const
     {
         return contextInfo_;
     }
-    const QueueInfo& Context::GetQueueInfo() const
+    const DeviceInfo& Context::GetDeviceInfo(DeviceIndex deviceIndex) const
     {
-        return queueInfo_;
+        return devicesInfo_[deviceIndex];
     }
-    ConstPlatformPtr Context::GetPlatformPtr() const
+    const QueueInfo& Context::GetQueueInfo(DeviceIndex deviceIndex) const
     {
-        return platform_;
+        return queuesInfo_[deviceIndex];
     }
     ContextInfo Context::GetContextInfo(cl_context context) const
     {

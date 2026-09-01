@@ -8,7 +8,7 @@ namespace club
     {
         return Buffer::Create();
     }
-    BufferPtr CreateBuffer(ConstContextPtr context, std::size_t size, cl_mem_flags flags)
+    BufferPtr CreateBuffer(ContextPtr context, std::size_t size, cl_mem_flags flags)
     {
         auto res = Buffer::Create();
 
@@ -40,55 +40,45 @@ namespace club
     {
         return const_cast<Buffer*>(this)->GetPtr();
     }
-    bool Buffer::Init(ConstContextPtr context, cl_mem_flags flags, std::size_t size)
+    bool Buffer::Init(ContextPtr context, cl_mem_flags flags, std::size_t size)
     {
-        bool res = false;
-
-        if (!initialized_)
-        {
-            res = Initialize(context, flags, size);
-        }
-
-        return res;
-    }
-    bool Buffer::Initialize(ConstContextPtr context, cl_mem_flags flags, std::size_t size)
-    {
-        bool res = false;
+        bool res{ false };
         Error error;
 
-        if (context != nullptr)
+        if(!context)
         {
-            context_ = context;
+            logger::Error(header, "Buffer not created: context pointer is null");
+         
+            return res;
+		}
+
+        if(!buffer_)
+        {
             size_ = size;
-            buffer_ = clCreateBuffer(context_->Get(), flags, size_, nullptr, &error);
+            buffer_ = clCreateBuffer(context->Get(), flags, size_, nullptr, &error);
 
             if (error != CL_SUCCESS)
             {
                 logger::Error(header, utils::string::Format("Buffer could not be created: {}", messages.at(error)));
-                logger::Error(header, utils::string::Format("Could not allocate memory: {} (kb)", size / 1024));
+                logger::Error(header, utils::string::Format("Buffer could not allocate memory: {} (kb)", size / 1024));
             }
             else
             {
                 bufferInfo_ = GetBufferInfo(buffer_);
-                initialized_ = true;
 
                 res = true;
             }
         }
-        else
-        {
-            logger::Error(header, "Buffer not created: context pointer is null");
-        }
 
         return res;
     }
-    EventPtr Buffer::Read(std::size_t offset, std::size_t size, void* ptr, cl_bool block)
+    EventPtr Buffer::Read(cl_command_queue queue,std::size_t offset, std::size_t size, void* ptr, cl_bool block)
     {
         EventPtr res {nullptr};
         cl_event event;
         Error error;
 
-        error = clEnqueueReadBuffer(context_->GetQueue(), buffer_, block, offset, size, ptr, 0, NULL, &event);
+        error = clEnqueueReadBuffer(queue, buffer_, block, offset, size, ptr, 0, NULL, &event);
 
         if (error != CL_SUCCESS)
         {
@@ -101,13 +91,13 @@ namespace club
 
         return res;
     }
-    EventPtr Buffer::Write(std::size_t offset, std::size_t size, const void* ptr, cl_bool block)
+    EventPtr Buffer::Write(cl_command_queue queue, std::size_t offset, std::size_t size, const void* ptr, cl_bool block)
     {
         EventPtr res {nullptr};
         cl_event event;
         Error error;
 
-        error = clEnqueueWriteBuffer(context_->GetQueue(), buffer_, block, offset, size, ptr, 0, NULL, &event);
+        error = clEnqueueWriteBuffer(queue, buffer_, block, offset, size, ptr, 0, NULL, &event);
 
         if (error != CL_SUCCESS)
         {
@@ -124,10 +114,6 @@ namespace club
     {
         return buffer_;
     }
-    const cl_context& Buffer::GetContext() const
-    {
-        return context_->Get();
-    }
     const BufferInfo& Buffer::GetInfo() const
     {
         return bufferInfo_;
@@ -136,14 +122,15 @@ namespace club
     {
         BufferInfo res;
 
-        res.type = GetBufferInfo<cl_mem_info>(arg1, CL_MEM_TYPE);
-        res.flags = GetBufferInfo<cl_mem_info>(arg1, CL_MEM_FLAGS);
+        res.type = GetBufferInfo<cl_mem_object_type>(arg1, CL_MEM_TYPE);
+        res.flags = GetBufferInfo<cl_mem_flags>(arg1, CL_MEM_FLAGS);
         res.size = GetBufferInfo<std::size_t>(arg1, CL_MEM_SIZE);
         res.hostPtr = GetBufferInfo<void*>(arg1, CL_MEM_HOST_PTR);
         res.context = GetBufferInfo<cl_context>(arg1, CL_MEM_CONTEXT);
 
         return res;
     }
+    
     template <typename T> typename std::enable_if<!is_vector<T>::value, T>::type Buffer::GetBufferInfo(cl_mem buffer, cl_mem_info info) const
     {
         std::size_t size;

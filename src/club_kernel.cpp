@@ -8,7 +8,7 @@ namespace club
     {
         return Kernel::Create();
     }
-    KernelPtr CreateKernel(ConstProgramPtr program, const String& kernelName, const Dimension& dim)
+    KernelPtr CreateKernel(ProgramPtr program, const String& kernelName, const Dimension& dim)
     {
         Error error;
         auto res = Kernel::Create();
@@ -19,13 +19,9 @@ namespace club
             return nullptr;
         }
 
-        res->SetLocalSize(dim);
+        res->SetDim(dim);
 
         return res;
-    }
-    KernelPtr CreateKernel(ConstProgramPtr program, const char* kernelName, const Dimension& dim)
-    {
-        return CreateKernel(program, static_cast<String>(kernelName), dim);
     }
     Kernel::~Kernel()
     {
@@ -48,11 +44,12 @@ namespace club
     {
         return const_cast<Kernel*>(this)->GetPtr();
     }
-    Error Kernel::Init(ConstProgramPtr program, const String& kernelName)
+ 
+    Error Kernel::Init(ProgramPtr program, const String& kernelName)
     {
         Error error;
 
-        if (initialized_)
+        if (kernel_)
         {
             return CL_SUCCESS;
         }
@@ -75,17 +72,12 @@ namespace club
         }
 
         kernelInfo_ = GetKernelInfo(kernel_);
-        initialized_ = true;
 
         return CL_SUCCESS;
     }
     const cl_kernel& Kernel::GetKernel() const
     {
         return kernel_;
-    }
-    const cl_program& Kernel::GetProgram() const
-    {
-        return program_->Get();
     }
     const KernelInfo& Kernel::GetInfo() const
     {
@@ -121,54 +113,20 @@ namespace club
     }
     void Kernel::SetDim(const Dimension& dim)
     {
-        localSize_.resize(dim);
-        for (auto& it : localSize_)
+        if (dim < 1 || dim > 3)
         {
-            it = 1;
-        }
-    }
-    void Kernel::SetLocalSize(const Dimension& dim)
-    {
-        if (dim != GetDim())
-        {
-            SetDim(dim);
+            logger::Error(header, utils::string::Format("Invalid dimension {}. Dimension must be between 1 and 3", dim));
+			
+            return;
         }
 
-        auto platformNumber = program_->context_->GetPlatformNumber();
-        auto deviceNumber = program_->context_->GetDeviceNumber();
-        auto workGroupSize = program_->platform_->GetDeviceInfo(platformNumber, deviceNumber).maxWorkGroupSize;
-        std::size_t localSize{ 1 };
-
-        if (program_->platform_->GetDeviceInfo(platformNumber, deviceNumber).type == CL_DEVICE_TYPE_CPU)
-        {
-            localSize = 1;
-        }
-        else if (program_->platform_->GetDeviceInfo(platformNumber, deviceNumber).type == CL_DEVICE_TYPE_GPU)
-        {
-            localSize = std::min(32u, utils::math::Power2Floor(static_cast<unsigned int>(std::pow(workGroupSize, 1. / dim))));
-        }
-
-        for (auto& it : localSize_)
-        {
-            it = localSize;
-        }
-    }
-    void Kernel::SetLocalSize(const LocalSize& localSize)
-    {        
-        localSize_ = localSize;
-    }
-    void Kernel::SetLocalSize(const Index& index, const std::size_t size)
-    {
-        localSize_[index] = size;
+		dim_ = dim;
     }
     Dimension Kernel::GetDim() const
     {
-        return static_cast<Dimension>(localSize_.size());
+        return dim_;
     }
-    const LocalSize& Kernel::GetLocalSize() const
-    {
-        return localSize_;
-    }
+
     template <typename T> typename std::enable_if<!is_vector<T>::value, T>::type Kernel::GetKernelInfo(cl_kernel kernel, cl_kernel_info info) const
     {
         std::size_t size;
