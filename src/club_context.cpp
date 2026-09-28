@@ -23,6 +23,7 @@ namespace club
     {
         for(auto &queue : queues_)
         {
+            clFinish(queue);
             clReleaseCommandQueue(queue);
         }
 
