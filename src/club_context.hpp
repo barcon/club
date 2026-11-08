@@ -15,7 +15,6 @@ namespace club
 
         static ContextPtr Create();
         ContextPtr GetPtr();
-        ConstContextPtr GetPtr() const;
 
         Error Init(PlatformPtr platform, PlatformIndex platformIndex, const DeviceIndices& deviceIndices);
 

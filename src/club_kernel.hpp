@@ -15,7 +15,6 @@ namespace club
 
         static KernelPtr Create();
         KernelPtr GetPtr();
-        ConstKernelPtr GetPtr() const;
 
         Error Init(ProgramPtr program, const String& kernelName);
 

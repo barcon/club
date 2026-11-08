@@ -15,7 +15,6 @@ namespace club
 
         static PlatformPtr Create();
         PlatformPtr GetPtr();
-        ConstPlatformPtr GetPtr() const;
 
         Error Init();
 

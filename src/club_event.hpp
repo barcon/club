@@ -15,7 +15,6 @@ namespace club
 
         static EventPtr Create();
         EventPtr GetPtr();
-        ConstEventPtr GetPtr() const;
 
         Error Init(cl_event event);
 

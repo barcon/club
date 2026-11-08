@@ -40,10 +40,6 @@ namespace club
     {
         return shared_from_this();
     }
-    ConstKernelPtr Kernel::GetPtr() const
-    {
-        return const_cast<Kernel*>(this)->GetPtr();
-    }
  
     Error Kernel::Init(ProgramPtr program, const String& kernelName)
     {

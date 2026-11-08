@@ -36,10 +36,6 @@ namespace club
     {
         return shared_from_this();
     }
-    ConstBufferPtr Buffer::GetPtr() const
-    {
-        return const_cast<Buffer*>(this)->GetPtr();
-    }
     bool Buffer::Init(ContextPtr context, cl_mem_flags flags, std::size_t size)
     {
         bool res{ false };

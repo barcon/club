@@ -153,27 +153,21 @@ namespace club
 
     class Platform;
     using PlatformPtr = std::shared_ptr<Platform>;
-    using ConstPlatformPtr = std::shared_ptr<const Platform>;
 
     class Context;
     using ContextPtr = std::shared_ptr<Context>;
-    using ConstContextPtr = std::shared_ptr<const Context>;
 
     class Program;
     using ProgramPtr = std::shared_ptr<Program>;
-    using ConstProgramPtr = std::shared_ptr<const Program>;
 
     class Buffer;
     using BufferPtr = std::shared_ptr<Buffer>;
-    using ConstBufferPtr = std::shared_ptr<const Buffer>;
 
     class Kernel;
     using KernelPtr = std::shared_ptr<Kernel>;
-    using ConstKernelPtr = std::shared_ptr<const Kernel>;
 
     class Event;
     using EventPtr = std::shared_ptr<Event>;
-    using ConstEventPtr = std::shared_ptr<const Event>;
 
     template <typename T, typename _ = void> struct is_vector
     {

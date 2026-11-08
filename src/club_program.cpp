@@ -63,10 +63,6 @@ namespace club
     {
         return shared_from_this();
     }
-    ConstProgramPtr Program::GetPtr() const
-    {
-        return const_cast<Program*>(this)->GetPtr();
-    }
     Error Program::Init(ContextPtr context, const String& source)
     {
         Error error;

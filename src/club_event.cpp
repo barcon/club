@@ -32,10 +32,6 @@ namespace club
     {
         return this->shared_from_this();
     }
-    ConstEventPtr Event::GetPtr() const
-    {
-        return const_cast<Event*>(this)->GetPtr();
-    }
     Error Event::Init(cl_event event)
     {
         if (event_)

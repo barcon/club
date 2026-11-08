@@ -16,7 +16,6 @@ namespace club
 
         static BufferPtr Create();
         BufferPtr GetPtr();
-        ConstBufferPtr GetPtr() const;
 
         bool Init(ContextPtr context, cl_mem_flags flags, std::size_t size);
 

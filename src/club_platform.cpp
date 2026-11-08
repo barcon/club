@@ -29,10 +29,6 @@ namespace club
     {
         return this->shared_from_this();
     }
-    ConstPlatformPtr Platform::GetPtr() const
-    {
-        return const_cast<Platform*>(this)->GetPtr();
-    }
     Error Platform::Init()
     {
         Error error;

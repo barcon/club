@@ -43,10 +43,6 @@ namespace club
     {
         return shared_from_this();
     }
-    ConstContextPtr Context::GetPtr() const
-    {
-        return const_cast<Context*>(this)->GetPtr();
-    }
     Error Context::Init(PlatformPtr platform, PlatformIndex platformIndex, const DeviceIndices& deviceIndices)
     {
         Error error;

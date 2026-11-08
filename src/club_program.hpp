@@ -17,7 +17,6 @@ namespace club
 
         static ProgramPtr Create();
         ProgramPtr GetPtr();
-        ConstProgramPtr GetPtr() const;
 
         Error Init(ContextPtr context, const String& source);
 
